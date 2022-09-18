@@ -5,7 +5,6 @@ class Vector {
     }
 }
 
-
 const CROSS = 'X';
 const ZERO = 'O';
 const EMPTY = ' ';
@@ -21,7 +20,6 @@ const DOWNRIGHT = new Vector(1, 1);
 const DOWN = new Vector(1, 0);
 const DOWNLEFT = new Vector(1, -1);
 const LEFT = new Vector(0, -1);
-
 
 const DIRECTIONS = [UPLEFT, UP, UPRIGHT, RIGHT, DOWNRIGHT, DOWN, DOWNLEFT, LEFT]; 
 
@@ -53,7 +51,7 @@ function getEmptyCells () {
 }
 
 function updateListCell(){
-    allCell = shuffleArray(getEmptyCells());
+    allCell = shuffle(getEmptyCells());
 }
 
 
@@ -84,12 +82,13 @@ function getStartFieldSize () {
     }
     return result;
 }
-
-
-function shuffleArray(arr){
-    arr.sort(()=>Math.random()-0.5);
-    return arr; // спорный момент, но для js, нврн, норм
-}
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      let j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
 
 
 function getSymbol (moveCounter) {
@@ -308,33 +307,6 @@ function addResetListener () {
 function resetClickHandler () {
     startGame();
     console.log('reset!');
-}
-
-
-/* Test Function */
-/* Победа первого игрока */
-function testWin () {
-    clickOnCell(0, 2);
-    clickOnCell(0, 0);
-    clickOnCell(2, 0);
-    clickOnCell(1, 1);
-    clickOnCell(2, 2);
-    clickOnCell(1, 2);
-    clickOnCell(2, 1);
-}
-
-/* Ничья */
-function testDraw () {
-    clickOnCell(2, 0);
-    clickOnCell(1, 0);
-    clickOnCell(1, 1);
-    clickOnCell(0, 0);
-    clickOnCell(1, 2);
-    clickOnCell(1, 2);
-    clickOnCell(0, 2);
-    clickOnCell(0, 1);
-    clickOnCell(2, 1);
-    clickOnCell(2, 2);
 }
 
 function clickOnCell (row, col) {
