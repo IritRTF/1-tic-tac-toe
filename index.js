@@ -167,30 +167,19 @@ function advancedAIMove () {
     let emptyCells = getEmptyCells();
     let emptyCell;
     let winner;
-    for (emptyCell of emptyCells) {
-        localField = copyArray(field);
-        localField[emptyCell[0]][emptyCell[1]] = CROSS;
-        winner = findTheWinner(localField);
-        if (winner !== null) break;
-    }
-    if (winner !== null) {
-        clickOnCell(emptyCell[0], emptyCell[1]);
-    } else {
-        localField;
-        emptyCells = getEmptyCells();
-        emptyCell = [];
+    let symbol;
+    main: for (symbol of [ZERO, CROSS]) {
         for (emptyCell of emptyCells) {
             localField = copyArray(field);
-            localField[emptyCell[0]][emptyCell[1]] = ZERO;
-            let winner = findTheWinner(localField);
-            if (winner !== null) break;
-        }
-        if (winner !== null) {
-            clickOnCell(emptyCell[0], emptyCell[1]);
-        } else {
-            basicAIMove();
+            localField[emptyCell[0]][emptyCell[1]] = symbol;
+            winner = findTheWinner(localField);
+            if (winner !== null) {
+                clickOnCell(emptyCell[0], emptyCell[1]);
+                break main;
+            }
         }
     }
+    if (winner === null) basicAIMove();
 }
 
 function findTheWinner (field) {
