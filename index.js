@@ -1,23 +1,36 @@
+class Vector {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+}
+
+
 const CROSS = 'X';
 const ZERO = 'O';
 const EMPTY = ' ';
 const RED_COLOR = '#F00'
+const WIN_LENGTH = 3;
 
-const UPLEFT = [-1, -1];
-const UP = [-1, 0];
-const UPRIGHT = [-1, 1];
-const RIGHT = [0, 1];
-const DOWNRIGHT = [1, 1];
-const DOWN = [1, 0];
-const DOWNLEFT = [1, -1];
-const LEFT = [0, -1];
 
-const VECTORS = [UPLEFT, UP, UPRIGHT, RIGHT, DOWNRIGHT, DOWN, DOWNLEFT, LEFT]; 
+const UPLEFT =  new Vector(-1, -1);
+const UP = new Vector(-1, 0);
+const UPRIGHT = new Vector(-1, 1);
+const RIGHT = new Vector(0, 1);
+const DOWNRIGHT = new Vector(1, 1);
+const DOWN = new Vector(1, 0);
+const DOWNLEFT = new Vector(1, -1);
+const LEFT = new Vector(0, -1);
+
+
+const DIRECTIONS = [UPLEFT, UP, UPRIGHT, RIGHT, DOWNRIGHT, DOWN, DOWNLEFT, LEFT]; 
 
 const container = document.getElementById('fieldWrapper');
 
 let onAI = false;
 let isAdvanceAI = false;
+let isFieldExtensionEnabled = false;
+
 let allCell = [];
 
 let field = [];
@@ -33,28 +46,34 @@ function getEmptyCells () {
     let result = [];
     for (let i = 0; i < fieldSize; ++i) {
         for (let j = 0; j < fieldSize; ++j) {
-            if (field[i][j] === EMPTY) result.push([i, j]);
+            if (field[i][j] === EMPTY) result.push(new Vector(i, j));
         }
     }
     return result;
 }
 
+function updateListCell(){
+    allCell = shuffleArray(getEmptyCells());
+}
+
+
 function startGame () {
+    if (!isFieldExtensionEnabled){
+        isFieldExtensionEnabled = confirm("Включить расширение поля?");
+    }
     if(!onAI){
         if(confirm("Включить AI?")){
-            if(confirm("Включить умный AI?")){
-                isAdvanceAI = true;
-            }
+            isAdvanceAI = confirm("Включить умный AI?");
             onAI = true;
         }
-    }    
+    }
     isGameOver = false;
     field = []
     fieldSize = getStartFieldSize();
     moveCounter = 0;
-    allCell = [];
     createField(fieldSize)
     renderGrid(fieldSize);
+    updateListCell();
 }
 
 function getStartFieldSize () {
@@ -68,7 +87,8 @@ function getStartFieldSize () {
 
 
 function shuffleArray(arr){
-    arr.sort(()=>Math.random()-0.5)
+    arr.sort(()=>Math.random()-0.5);
+    return arr; // спорный момент, но для js, нврн, норм
 }
 
 
@@ -76,45 +96,40 @@ function getSymbol (moveCounter) {
     return moveCounter % 2 == 0 ? CROSS: ZERO;
 }
 
-function isNotOutOfBounds (cell) {
-    return cell[0] >= 0 && cell[0] < fieldSize && cell[1] >= 0 && cell[1] < fieldSize;
+function isNotOutOfBounds (point) {
+    return point.x >= 0 && point.x < fieldSize && point.y >= 0 && point.y < fieldSize;
 }
 
 function getNeighbourCells (x, y) {
-    let neighbourCells = [];
-    for (let vector of VECTORS) {
-        neighbourCells.push([x + vector[0], y + vector[1]]);
-    }
     let result = [];
-    for (let cell of neighbourCells) {
-        if (isNotOutOfBounds(cell)) result.push(cell);
+    for (let direction of DIRECTIONS) {
+        let point =  new Vector(x + direction.x, y + direction.y);
+        if (isNotOutOfBounds(point)){
+            result.push(point);
+        }
     }
     return result;
 }
 
 function createField (fieldSize) {
     for (let i = 0; i < fieldSize; ++i) {
-        let array = []
+        let row = []
         for (let j = 0; j < fieldSize; ++j) {
-            array.push(EMPTY);
-            allCell.push([i,j]);
+            row.push(EMPTY);
         }
-        field.push(array);
+        field.push(row);
     }
-    shuffleArray(allCell);
 }
 
 function extendField () {
-    let array = []
+    let row = []
     for (let i = 0; i < fieldSize; ++i) {
-        array.push(EMPTY);
+        row.push(EMPTY);
     }
-    field.push(array);
+    field.push(row);
     for (let i = 0; i <= fieldSize; ++i) {
         field[i][fieldSize] = EMPTY;
     }
-    allCell =  getEmptyCells();
-    shuffleArray(allCell);
     ++fieldSize;
 }
 
@@ -152,7 +167,6 @@ function cellClickHandler (row, col) {
     
 }
 
-
 function makeMove(x, y, symbol){
     if (onAI && symbol == ZERO){
         makeMoveAI();
@@ -175,10 +189,10 @@ function makeMove(x, y, symbol){
 
 function makeMoveAI(){
     let point = isAdvanceAI? getAdvanceMoveAI(): getMoveAI();
-    renderSymbolInCell(ZERO, point[0], point[1]);
+    renderSymbolInCell(ZERO, point.x, point.y);
     ++moveCounter;
-    field[point[0]][point[1]] = ZERO;
-    let result = IsMoveToCellWinning(point[0], point[1], ZERO);
+    field[point.x][point.y] = ZERO;
+    let result = IsMoveToCellWinning(point.x, point.y, ZERO);
     if (result){
         announceWinner(result, "AI");
         return;
@@ -187,10 +201,9 @@ function makeMoveAI(){
 
 }
 
-
 function getMoveAI(){
     let result = allCell.pop();
-    while(field[result[0]][result[1]] !== EMPTY && allCell.length !== 0){
+    while(field[result.x][result.y] !== EMPTY && allCell.length !== 0){
         result = allCell.pop();
     }
     return result;
@@ -202,7 +215,7 @@ function getAdvanceMoveAI(){
 }   
 
 function announceWinner(winner, w){
-    let symbol = field[winner[0][0]][winner[0][1]];
+    let symbol = field[winner[0].x][winner[0].y];
     renderVictorySymbols(symbol, winner, RED_COLOR);
     alert(`Победил ${w}`);
     isGameOver = true;
@@ -211,8 +224,8 @@ function announceWinner(winner, w){
 
 function findWinnerCell (symbol) {
     main: for (let i = 0; i < allCell.length; ++i) {
-            if (field[allCell[i][0]][allCell[i][1]] === EMPTY){
-                if (IsMoveToCellWinning(allCell[i][0], allCell[i][1], symbol))
+            if (field[allCell[i].x][allCell[i].y] === EMPTY){
+                if (IsMoveToCellWinning(allCell[i].x, allCell[i].y, symbol))
                     return allCell[i];
             }
     }
@@ -222,26 +235,38 @@ function findWinnerCell (symbol) {
 function IsMoveToCellWinning(i,j, symbol){
     let neighbourCells = getNeighbourCells(i, j);  // отбирает все клетки, которые находятся в поле вокруг
     for (let neighbourCell of neighbourCells) {
-        let vector = [neighbourCell[0] - i, neighbourCell[1] - j]; // продлевает линию, исходная точка начальная, neighbourCell следующая, а эта - идущая после NC 
-        if (symbol === field[neighbourCell[0]][neighbourCell[1]]) {
-            let nextCell = [neighbourCell[0] + vector[0], neighbourCell[1] + vector[1]];
-            if (isNotOutOfBounds(nextCell) && symbol === field[nextCell[0]][nextCell[1]]) {
-                return createWinLine(neighbourCell[0], neighbourCell[1], vector);
-            }
-        }
-        if(isNotOutOfBounds([i - vector[0], j - vector[1]])
-            && field[neighbourCell[0]][neighbourCell[1]] === symbol
-            && field[i - vector[0]][j - vector[1]] === symbol){
-
-                return createWinLine(i, j, vector);
-            }
+        let direction = new Vector(neighbourCell.x - i, neighbourCell.y - j);
+        let line = createLine(new Vector(i,j), direction, symbol);
+        if(line.length >= WIN_LENGTH)
+            return line; 
     }
     return null;
 }
 
-function createWinLine(i, j, vector)
-{
-    return [[i - vector[0], j - vector[1]], [i, j], [i +  vector[0], j + vector[1]]]; 
+//рефакторинг
+function createLine(point, direction, symbol){
+    let result = [point];
+    for (let step = 1;
+      isNotOutOfBounds(new Vector(point.x + step * direction.x,point.y + step * direction.y));
+      step++){
+
+        let newPoint = new Vector(point.x + step * direction.x,point.y + step * direction.y);
+        if (field[newPoint.x][newPoint.y] !== symbol){
+            break;
+        }
+        result.push(newPoint);
+    }
+    for (let step = -1;
+      isNotOutOfBounds(new Vector(point.x + step * direction.x,point.y + step * direction.y));
+      step--){
+
+        let newPoint = new Vector(point.x + step * direction.x,point.y + step * direction.y);
+        if (field[newPoint.x][newPoint.y] !== symbol){
+            break;
+        }
+        result.push(newPoint);
+    }
+    return result;
 }
 
 
@@ -251,15 +276,16 @@ function updateGameStatus () {
     if (fieldSize ** 2 == moveCounter) {
         alert('Победила дружба');
         isGameOver = true;
-    } else if (moveCounter > fieldSize ** 2 / 2) {
+    } else if (isFieldExtensionEnabled && moveCounter > fieldSize ** 2 / 2) {
         renderExtendedField();
+        updateListCell();
     }
 }
 
 function renderVictorySymbols (symbol, winner, color) {
-    renderSymbolInCell(symbol, winner[0][0], winner[0][1], color);
-    renderSymbolInCell(symbol, winner[1][0], winner[1][1], color);
-    renderSymbolInCell(symbol, winner[2][0], winner[2][1], color);
+    for(let i =0; i < winner.length; i++){
+        renderSymbolInCell(symbol, winner[i].x, winner[i].y, color);
+    }
 }
 
 function renderSymbolInCell (symbol, row, col, color = '#333') {
