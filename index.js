@@ -9,12 +9,36 @@ let countMove = 0;
 let endGame = false;
 let winCombination = new Array;
 
+class Point{
+    constructor(row, col){
+        this.row = row;
+        this.col = col;
+    }
+}
+
 let sizeGrid = Number (prompt("Введите размер поля", 3));
+let freeCellArray = fillArrayWithPoints(sizeGrid);
 let cellArray = new Array(sizeGrid);
 
 createCellDoubArr();
 startGame(sizeGrid);
 addResetListener();
+
+function fillArrayWithPoints(size){
+    let array = new Array;
+    for (let i = 0; i < size; i++)
+    for (let j = 0; j < size; j++)
+    array.push(new Point(i, j));
+    return array;
+}
+
+function deletePoint(point){
+    for (let i = 0; i < freeCellArray.length; i++)
+        if (freeCellArray[i].row === point.row && freeCellArray[i].col === point.col){
+            freeCellArray.splice(i, 1);
+            break;
+        }
+}
 
 function createCellDoubArr(){
     for (let i = 0; i < cellArray.length; i++){
@@ -38,7 +62,7 @@ function renderGrid (dimension) {
         for (let j = 0; j < dimension; j++) {
             const cell = document.createElement('td');
             cell.textContent = EMPTY;
-            cell.addEventListener('click', () => cellClickHandler(i, j));
+            cell.addEventListener('click', () => cellClickHandler(i, j) );
             row.appendChild(cell);
         }
         container.appendChild(row);
@@ -46,17 +70,41 @@ function renderGrid (dimension) {
 }
 
 function cellClickHandler (row, col) {
-
+    
+    
+    
     if(!endGame && findCell(row, col).textContent == EMPTY){
+        currentPlayer = CROSS;
         renderSymbolInCell(currentPlayer, row, col);
         cellArray[row][col] = currentPlayer;
+        deletePoint(new Point(row, col));
         if(countMove >= 4) checkWin();
-        currentPlayer = (currentPlayer == CROSS) ? ZERO : CROSS;
-        countMove++;
+        countMove++; 
+        if (!endGame){
+            currentPlayer = ZERO;
+            let point = freeCellArray[Math.floor(Math.random() * freeCellArray.length)];
+            renderSymbolInCell(currentPlayer, point.row, point.col);
+            deletePoint(point);
+            cellArray[point.row][point.col] = currentPlayer;
+            if(countMove >= 4) checkWin();
+            countMove++; 
+        }
     }
+    /*if (!endGame){
+        let point = freeCellArray[Math.floor(Math.random() * freeCellArray.length)];
+        renderSymbolInCell(currentPlayer, point.row, point.col);
+        deletePoint(point);
+        cellArray[row][col] = currentPlayer;
+        if(countMove >= 4) checkWin();
+        if (!endGame)
+            currentPlayer = CROSS;
+        countMove++;
+    }*/
+
     console.log(`Clicked on cell: ${row}, ${col}`);
     console.log(cellArray[row][col]);
-
+    console.log(freeCellArray);
+    
     if(countMove == sizeGrid ** 2) {
         endGame = true;
         alert("Победила дружба");
@@ -199,6 +247,7 @@ function resetClickHandler () {
     countMove = 0;
     currentPlayer = CROSS;
     createCellDoubArr();
+    freeCellArray = fillArrayWithPoints(sizeGrid);
     renderGrid(sizeGrid);
     console.log('reset!');
 }
