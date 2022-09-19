@@ -9,8 +9,6 @@ const CROSS = 'X';
 const ZERO = 'O';
 const EMPTY = ' ';
 const RED_COLOR = '#F00'
-const WIN_LENGTH = 3;
-
 
 const UPLEFT =  new Vector(-1, -1);
 const UP = new Vector(-1, 0);
@@ -30,8 +28,9 @@ let isAdvanceAI = false;
 let isFieldExtensionEnabled = false;
 
 let allCell = [];
-
 let field = [];
+
+let winLength = 3;
 let fieldSize = 3;
 let moveCounter = 0;
 let isGameOver = false;
@@ -42,8 +41,8 @@ addResetListener();
 
 function getEmptyCells () {
     let result = [];
-    for (let i = 0; i < fieldSize; ++i) {
-        for (let j = 0; j < fieldSize; ++j) {
+    for (let i = 0; i < fieldSize; i++) {
+        for (let j = 0; j < fieldSize; j++) {
             if (field[i][j] === EMPTY) result.push(new Vector(i, j));
         }
     }
@@ -54,8 +53,8 @@ function updateListCell(){
     allCell = shuffle(getEmptyCells());
 }
 
-
 function startGame () {
+
     if (!isFieldExtensionEnabled){
         isFieldExtensionEnabled = confirm("Включить расширение поля?");
     }
@@ -68,6 +67,7 @@ function startGame () {
     isGameOver = false;
     field = []
     fieldSize = getStartFieldSize();
+    //winLength = Math.Min(5, fieldSize); // если вдруг не хотим делать серии из 3 на большом поле 
     moveCounter = 0;
     createField(fieldSize)
     renderGrid(fieldSize);
@@ -75,10 +75,10 @@ function startGame () {
 }
 
 function getStartFieldSize () {
-    let result = '';
-    result = prompt('Введите стартовое значение размера поля.', 3);
+    let result = "";
+    result = prompt("Введите стартовое значение размера поля.", 3);
     while (isNaN(result)) {
-        result = prompt('Неверный ввод данных. Повторите попытку — введите число.', 3);
+        result = prompt("Неверный ввод данных. Повторите попытку — введите число.", 3);
     }
     return result;
 }
@@ -91,11 +91,11 @@ function shuffle(array) {
   }
 
 
-function getSymbol (moveCounter) {
+function GetCurrentSymbolPlayer (moveCounter) {
     return moveCounter % 2 == 0 ? CROSS: ZERO;
 }
 
-function isNotOutOfBounds (point) {
+function isWithinField (point) {
     return point.x >= 0 && point.x < fieldSize && point.y >= 0 && point.y < fieldSize;
 }
 
@@ -103,7 +103,7 @@ function getNeighbourCells (x, y) {
     let result = [];
     for (let direction of DIRECTIONS) {
         let point =  new Vector(x + direction.x, y + direction.y);
-        if (isNotOutOfBounds(point)){
+        if (isWithinField(point)){
             result.push(point);
         }
     }
@@ -162,45 +162,33 @@ function cellClickHandler (row, col) {
 
     if (isGameOver || field[row][col] !== EMPTY) return;
     
-    makeMove(row,col, getSymbol(moveCounter));
+    makeMove(new Vector(row, col), GetCurrentSymbolPlayer(moveCounter));
     
 }
 
-function makeMove(x, y, symbol){
-    if (onAI && symbol == ZERO){
-        makeMoveAI();
-        return;
-    }
-    field[x][y] = symbol;
-    renderSymbolInCell(symbol, x, y);
-    ++moveCounter;
-    let result = IsMoveToCellWinning(x, y, symbol);
-    if (result){
-        announceWinner(result, `Player${symbol === CROSS? 1: 2}`);
-        return;
-    }
-    updateGameStatus();
-    if(onAI)
-        makeMove(-1,-1, ZERO);
-    //
+function makeMove(point, symbol){
+    if(isGameOver) return;
 
-}
-
-function makeMoveAI(){
-    let point = isAdvanceAI? getAdvanceMoveAI(): getMoveAI();
-    renderSymbolInCell(ZERO, point.x, point.y);
-    ++moveCounter;
-    field[point.x][point.y] = ZERO;
-    let result = IsMoveToCellWinning(point.x, point.y, ZERO);
-    if (result){
-        announceWinner(result, "AI");
+    field[point.x][point.y] = symbol;
+    renderSymbolInCell(symbol, point.x, point.y);
+    moveCounter++;
+    let line = findWinLineInPosition(point.x, point.y, symbol);
+    if (line){
+        announceWinner(line, onAI && symbol === ZERO ? "AI": `Player${symbol === CROSS? 1: 2}`);
         return;
     }
     updateGameStatus();
 
+    if(onAI && symbol == CROSS)
+        makeMove(getMoveAI(), GetCurrentSymbolPlayer(moveCounter));
 }
 
 function getMoveAI(){
+    return isAdvanceAI? getAdvanceMoveAI(): getRandomMove();
+
+}
+
+function getRandomMove(){
     let result = allCell.pop();
     while(field[result.x][result.y] !== EMPTY && allCell.length !== 0){
         result = allCell.pop();
@@ -209,65 +197,65 @@ function getMoveAI(){
 }
 
 function getAdvanceMoveAI(){
-    let result = findWinnerCell(ZERO);
-    return result !== null? result: getMoveAI();
+    return findWinnerCell(ZERO) ?? getRandomMove();
 }   
 
-function announceWinner(winner, w){
+function announceWinner(winner, nameWinne){
     let symbol = field[winner[0].x][winner[0].y];
     renderVictorySymbols(symbol, winner, RED_COLOR);
-    alert(`Победил ${w}`);
+    alert(`Победил ${nameWinne}`);
     isGameOver = true;
 }
 
-
 function findWinnerCell (symbol) {
-    main: for (let i = 0; i < allCell.length; ++i) {
-            if (field[allCell[i].x][allCell[i].y] === EMPTY){
-                if (IsMoveToCellWinning(allCell[i].x, allCell[i].y, symbol))
-                    return allCell[i];
-            }
+    let EmtyCells = getEmptyCells();
+    main: for (let i = 0; i < EmtyCells.length; ++i) {
+            if (findWinLineInPosition(EmtyCells[i].x, EmtyCells[i].y, symbol))
+                return EmtyCells[i];
     }
     return null;
 }
 
-function IsMoveToCellWinning(i,j, symbol){
-    let neighbourCells = getNeighbourCells(i, j);  // отбирает все клетки, которые находятся в поле вокруг
+function findWinLineInPosition(x, y, symbol){
+    let neighbourCells = getNeighbourCells(x, y);
     for (let neighbourCell of neighbourCells) {
-        let direction = new Vector(neighbourCell.x - i, neighbourCell.y - j);
-        let line = createLine(new Vector(i,j), direction, symbol);
-        if(line.length >= WIN_LENGTH)
+        let direction = new Vector(neighbourCell.x - x, neighbourCell.y - y);
+        let line = createLine(new Vector(x, y), direction, symbol);
+        if(line.length >= winLength)
             return line; 
     }
     return null;
 }
 
-//рефакторинг
 function createLine(point, direction, symbol){
     let result = [point];
-    for (let step = 1;
-      isNotOutOfBounds(new Vector(point.x + step * direction.x,point.y + step * direction.y));
-      step++){
+    let isPossibleToGoInDir = true;
+    let isPossibleToGoAgainstDir = true;
 
-        let newPoint = new Vector(point.x + step * direction.x,point.y + step * direction.y);
-        if (field[newPoint.x][newPoint.y] !== symbol){
-            break;
-        }
-        result.push(newPoint);
-    }
-    for (let step = -1;
-      isNotOutOfBounds(new Vector(point.x + step * direction.x,point.y + step * direction.y));
-      step--){
+    for (let step = 1; step < winLength; step++){
+        if (!isPossibleToGoInDir && !isPossibleToGoAgainstDir) break;
 
-        let newPoint = new Vector(point.x + step * direction.x,point.y + step * direction.y);
-        if (field[newPoint.x][newPoint.y] !== symbol){
-            break;
+        if(isPossibleToGoInDir){
+            isPossibleToGoInDir = addPointInLine(new Vector(point.x + step * direction.x,
+                                              point.y + step * direction.y),
+                                   symbol, result);
         }
-        result.push(newPoint);
+        if (isPossibleToGoAgainstDir){
+            isPossibleToGoAgainstDir = addPointInLine(new Vector(point.x - step * direction.x,
+                                              point.y - step * direction.y),
+                                   symbol, result)
+        }
     }
     return result;
 }
 
+function addPointInLine(point, symbol, line){
+    if (isWithinField(point) && field[point.x][point.y] === symbol){
+        line.push(point)
+        return true;
+    }
+    return false;
+}
 
 function updateGameStatus () {
     console.log(fieldSize ** 2 / 2);
