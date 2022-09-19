@@ -42,12 +42,10 @@ function deletePoint(point){
 
 function createCellDoubArr(){
     for (let i = 0; i < cellArray.length; i++){
-        cellArray[i] = new Array(sizeGrid); //[Cross/Zero/Empty, player]
+        cellArray[i] = new Array(sizeGrid);
             for(let j = 0; j < cellArray[i].length; j++)
             cellArray[i][j] = EMPTY;
     }
-
-    //Для расширения поля, можно сделать массив больше, чем он изначально нужен
 }
 
 function startGame (size) {
@@ -90,16 +88,6 @@ function cellClickHandler (row, col) {
             countMove++; 
         }
     }
-    /*if (!endGame){
-        let point = freeCellArray[Math.floor(Math.random() * freeCellArray.length)];
-        renderSymbolInCell(currentPlayer, point.row, point.col);
-        deletePoint(point);
-        cellArray[row][col] = currentPlayer;
-        if(countMove >= 4) checkWin();
-        if (!endGame)
-            currentPlayer = CROSS;
-        countMove++;
-    }*/
 
     console.log(`Clicked on cell: ${row}, ${col}`);
     console.log(cellArray[row][col]);
@@ -115,11 +103,6 @@ function checkWin(){
     checkWinHorizontal();
     checkWinVertical();
     checkWinDiagonal();
-
-    //Игрок может выйграть только в сой ход
-    //Нужно проверять только последний ход игрока
-    //Нужно проверять противоположные стороны 
-    //Проверка может начинаться после (хода = SizeGrid * 2 (два игрока))
 }
 
 function checkWinHorizontal(){
