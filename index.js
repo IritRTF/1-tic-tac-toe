@@ -8,7 +8,8 @@ class Vector {
 const CROSS = 'X';
 const ZERO = 'O';
 const EMPTY = ' ';
-const RED_COLOR = '#F00'
+
+const RED_COLOR = '#F00';
 
 const UPLEFT =  new Vector(-1, -1);
 const UP = new Vector(-1, 0);
@@ -49,7 +50,7 @@ function getEmptyCells () {
     return result;
 }
 
-function updateListCell(){
+function updateListCell (){
     allCell = shuffle(getEmptyCells());
 }
 
@@ -65,11 +66,11 @@ function startGame () {
         }
     }
     isGameOver = false;
-    field = []
+    field = [];
     fieldSize = getStartFieldSize();
-    //winLength = Math.Min(5, fieldSize); // если вдруг не хотим делать серии из 3 на большом поле 
+    //winLength = fieldSize <= 5? 3: 5; // если вдруг не хотим делать серии из 3 на большом поле 
     moveCounter = 0;
-    createField(fieldSize)
+    createField(fieldSize);
     renderGrid(fieldSize);
     updateListCell();
 }
@@ -82,14 +83,15 @@ function getStartFieldSize () {
     }
     return result;
 }
+
+
 function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
       let j = Math.floor(Math.random() * (i + 1));
       [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
-  }
-
+}
 
 function GetCurrentSymbolPlayer (moveCounter) {
     return moveCounter % 2 == 0 ? CROSS: ZERO;
@@ -111,9 +113,9 @@ function getNeighbourCells (x, y) {
 }
 
 function createField (fieldSize) {
-    for (let i = 0; i < fieldSize; ++i) {
+    for (let i = 0; i < fieldSize; i++) {
         let row = []
-        for (let j = 0; j < fieldSize; ++j) {
+        for (let j = 0; j < fieldSize; j++) {
             row.push(EMPTY);
         }
         field.push(row);
@@ -122,39 +124,14 @@ function createField (fieldSize) {
 
 function extendField () {
     let row = []
-    for (let i = 0; i < fieldSize; ++i) {
+    for (let i = 0; i < fieldSize; i++) {
         row.push(EMPTY);
     }
     field.push(row);
-    for (let i = 0; i <= fieldSize; ++i) {
+    for (let i = 0; i <= fieldSize; i++) {
         field[i][fieldSize] = EMPTY;
     }
-    ++fieldSize;
-}
-
-function renderExtendedField () {
-    extendField();
-    renderGrid(fieldSize);
-    for (let i = 0; i < fieldSize; ++i) {
-        for (let j = 0; j < fieldSize; ++j) {
-            renderSymbolInCell(field[i][j], i, j);
-        }
-    }
-}
-
-function renderGrid (dimension) {
-    container.innerHTML = '';
-
-    for (let i = 0; i < dimension; i++) {
-        const row = document.createElement('tr');
-        for (let j = 0; j < dimension; j++) {
-            const cell = document.createElement('td');
-            cell.textContent = EMPTY;
-            cell.addEventListener('click', () => cellClickHandler(i, j));
-            row.appendChild(cell);
-        }
-        container.appendChild(row);
-    }
+    fieldSize++;
 }
 
 function cellClickHandler (row, col) {
@@ -166,7 +143,7 @@ function cellClickHandler (row, col) {
     
 }
 
-function makeMove(point, symbol){
+function makeMove (point, symbol){
     if(isGameOver) return;
 
     field[point.x][point.y] = symbol;
@@ -183,12 +160,29 @@ function makeMove(point, symbol){
         makeMove(getMoveAI(), GetCurrentSymbolPlayer(moveCounter));
 }
 
-function getMoveAI(){
-    return isAdvanceAI? getAdvanceMoveAI(): getRandomMove();
-
+function announceWinner (lineWinner, nameWinner){
+    let symbol = field[lineWinner[0].x][lineWinner[0].y];
+    renderVictorySymbols(symbol, lineWinner, RED_COLOR);
+    alert(`Победил ${nameWinner}`);
+    isGameOver = true;
 }
 
-function getRandomMove(){
+function updateGameStatus () {
+    if (fieldSize ** 2 == moveCounter) {
+        alert('Победила дружба');
+        isGameOver = true;
+    } else if (isFieldExtensionEnabled && moveCounter > fieldSize ** 2 / 2) {
+        extendField();
+        rerenderField();
+        updateListCell();
+    }
+}
+
+function getMoveAI (){
+    return isAdvanceAI? getAdvanceMoveAI(): getRandomMove();
+}
+
+function getRandomMove (){
     let result = allCell.pop();
     while(field[result.x][result.y] !== EMPTY && allCell.length !== 0){
         result = allCell.pop();
@@ -196,38 +190,32 @@ function getRandomMove(){
     return result;
 }
 
-function getAdvanceMoveAI(){
+function getAdvanceMoveAI (){
     return findWinnerCell(ZERO) ?? getRandomMove();
 }   
 
-function announceWinner(winner, nameWinne){
-    let symbol = field[winner[0].x][winner[0].y];
-    renderVictorySymbols(symbol, winner, RED_COLOR);
-    alert(`Победил ${nameWinne}`);
-    isGameOver = true;
-}
-
 function findWinnerCell (symbol) {
     let EmtyCells = getEmptyCells();
-    main: for (let i = 0; i < EmtyCells.length; ++i) {
-            if (findWinLineInPosition(EmtyCells[i].x, EmtyCells[i].y, symbol))
-                return EmtyCells[i];
+    for (let i = 0; i < EmtyCells.length; i++) {
+        if (findWinLineInPosition(EmtyCells[i].x, EmtyCells[i].y, symbol))
+            return EmtyCells[i];
     }
     return null;
 }
 
-function findWinLineInPosition(x, y, symbol){
+function findWinLineInPosition (x, y, symbol){
     let neighbourCells = getNeighbourCells(x, y);
     for (let neighbourCell of neighbourCells) {
         let direction = new Vector(neighbourCell.x - x, neighbourCell.y - y);
         let line = createLine(new Vector(x, y), direction, symbol);
+
         if(line.length >= winLength)
             return line; 
     }
     return null;
 }
 
-function createLine(point, direction, symbol){
+function createLine (point, direction, symbol){
     let result = [point];
     let isPossibleToGoInDir = true;
     let isPossibleToGoAgainstDir = true;
@@ -235,21 +223,23 @@ function createLine(point, direction, symbol){
     for (let step = 1; step < winLength; step++){
         if (!isPossibleToGoInDir && !isPossibleToGoAgainstDir) break;
 
-        if(isPossibleToGoInDir){
-            isPossibleToGoInDir = addPointInLine(new Vector(point.x + step * direction.x,
-                                              point.y + step * direction.y),
-                                   symbol, result);
+        if (isPossibleToGoInDir){
+            isPossibleToGoInDir =
+             addPointInLine(new Vector(point.x + step * direction.x,
+                                       point.y + step * direction.y),
+                            symbol, result);
         }
         if (isPossibleToGoAgainstDir){
-            isPossibleToGoAgainstDir = addPointInLine(new Vector(point.x - step * direction.x,
-                                              point.y - step * direction.y),
-                                   symbol, result)
+            isPossibleToGoAgainstDir = 
+             addPointInLine(new Vector(point.x - step * direction.x,
+                                       point.y - step * direction.y),
+                            symbol, result)
         }
     }
     return result;
 }
 
-function addPointInLine(point, symbol, line){
+function addPointInLine (point, symbol, line){
     if (isWithinField(point) && field[point.x][point.y] === symbol){
         line.push(point)
         return true;
@@ -257,21 +247,33 @@ function addPointInLine(point, symbol, line){
     return false;
 }
 
-function updateGameStatus () {
-    console.log(fieldSize ** 2 / 2);
-    console.log(moveCounter);
-    if (fieldSize ** 2 == moveCounter) {
-        alert('Победила дружба');
-        isGameOver = true;
-    } else if (isFieldExtensionEnabled && moveCounter > fieldSize ** 2 / 2) {
-        renderExtendedField();
-        updateListCell();
+function rerenderField () {
+    renderGrid(fieldSize);
+    for (let i = 0; i < fieldSize; i++) {
+        for (let j = 0; j < fieldSize; j++) {
+            renderSymbolInCell(field[i][j], i, j);
+        }
     }
 }
 
-function renderVictorySymbols (symbol, winner, color) {
-    for(let i =0; i < winner.length; i++){
-        renderSymbolInCell(symbol, winner[i].x, winner[i].y, color);
+function renderVictorySymbols (symbol, winnerLine, color) {
+    for(let i = 0; i < winnerLine.length; i++){
+        renderSymbolInCell(symbol, winnerLine[i].x, winnerLine[i].y, color);
+    }
+}
+
+function renderGrid (dimension) {
+    container.innerHTML = '';
+
+    for (let i = 0; i < dimension; i++) {
+        const row = document.createElement('tr');
+        for (let j = 0; j < dimension; j++) {
+            const cell = document.createElement('td');
+            cell.textContent = EMPTY;
+            cell.addEventListener('click', () => cellClickHandler(i, j));
+            row.appendChild(cell);
+        }
+        container.appendChild(row);
     }
 }
 
