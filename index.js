@@ -4,17 +4,17 @@ const EMPTY = ' ';
 
 const container = document.getElementById('fieldWrapper');
 
-let currentPlayer = CROSS;
-let countMove = 0;
-let endGame = false;
-let winCombination = new Array;
-
 class Point{
     constructor(row, col){
         this.row = row;
         this.col = col;
     }
 }
+
+let currentPlayer = CROSS;
+let countMove = 0;
+let endGame = false;
+let winCombination = new Array;
 
 let sizeGrid = Number (prompt("Введите размер поля", 3));
 let freeCellArray = fillArrayWithPoints(sizeGrid);
@@ -27,8 +27,8 @@ addResetListener();
 function fillArrayWithPoints(size){
     let array = new Array;
     for (let i = 0; i < size; i++)
-    for (let j = 0; j < size; j++)
-    array.push(new Point(i, j));
+        for (let j = 0; j < size; j++)
+            array.push(new Point(i, j));
     return array;
 }
 
@@ -44,7 +44,7 @@ function createCellDoubArr(){
     for (let i = 0; i < cellArray.length; i++){
         cellArray[i] = new Array(sizeGrid);
             for(let j = 0; j < cellArray[i].length; j++)
-            cellArray[i][j] = EMPTY;
+                cellArray[i][j] = EMPTY;
     }
 }
 
@@ -68,36 +68,42 @@ function renderGrid (dimension) {
 }
 
 function cellClickHandler (row, col) {
-    
-    
-    
+    console.log(`Clicked on cell: ${row}, ${col}`);
+
     if(!endGame && findCell(row, col).textContent == EMPTY){
         currentPlayer = CROSS;
         renderSymbolInCell(currentPlayer, row, col);
         cellArray[row][col] = currentPlayer;
+        countMove++;
         deletePoint(new Point(row, col));
-        if(countMove >= 4) checkWin();
-        countMove++; 
+
+        if(countMove >= 4) 
+            checkWin(); 
+            checkWinFriendship();
+
         if (!endGame){
             currentPlayer = ZERO;
             let point = freeCellArray[Math.floor(Math.random() * freeCellArray.length)];
             renderSymbolInCell(currentPlayer, point.row, point.col);
+            countMove++;
             deletePoint(point);
             cellArray[point.row][point.col] = currentPlayer;
-            if(countMove >= 4) checkWin();
-            countMove++; 
+            
+            if(countMove >= 4){ 
+                checkWin();
+                checkWinFriendship();
+            }
         }
     }
-
-    console.log(`Clicked on cell: ${row}, ${col}`);
     console.log(cellArray[row][col]);
-    console.log(freeCellArray);
-    
-    if(countMove == sizeGrid ** 2) {
+}
+
+function checkWinFriendship(){
+    if(countMove == sizeGrid ** 2 && !endGame) {
         endGame = true;
         alert("Победила дружба");
     }
-}
+} 
 
 function checkWin(){
     checkWinHorizontal();
@@ -235,9 +241,6 @@ function resetClickHandler () {
     console.log('reset!');
 }
 
-
-/* Test Function */
-/* Победа первого игрока */
 function testWin () {
     clickOnCell(0, 2);
     clickOnCell(0, 0);
@@ -248,7 +251,6 @@ function testWin () {
     clickOnCell(2, 1);
 }
 
-/* Ничья */
 function testDraw () {
     clickOnCell(2, 0);
     clickOnCell(1, 0);
