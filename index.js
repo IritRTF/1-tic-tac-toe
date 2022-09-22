@@ -4,10 +4,28 @@ const EMPTY = ' ';
 
 const container = document.getElementById('fieldWrapper');
 
+let gameField;
+let activePlayer;
+let winner;
+
+function generateGrid (dimension) {
+    field = []
+    for (let i = 0; i < dimension; i++) {
+        field.push([])
+        for (let j = 0; j < dimension; j++) {
+            field[i].push(EMPTY)
+        }
+    }
+    return field
+}
+
 startGame();
 addResetListener();
 
 function startGame () {
+    gameField = generateGrid (3)
+    activePlayer = CROSS
+    winner = EMPTY
     renderGrid(3);
 }
 
@@ -27,13 +45,54 @@ function renderGrid (dimension) {
 }
 
 function cellClickHandler (row, col) {
-    // Пиши код тут
-    console.log(`Clicked on cell: ${row}, ${col}`);
+    if (winner != EMPTY) return
 
+    if (gameField[row][col] == EMPTY) {
+        renderSymbolInCell(activePlayer, row, col, '#F00');
+        gameField[row][col] = activePlayer
+        activePlayer = activePlayer === CROSS ? ZERO : CROSS
+    }
+    console.log(`Clicked on cell: ${row}, ${col}`);
+    winner = checkingWinner ()
+    if (winner != EMPTY) alert(`Победили ${winner} !!!`)
+    else if (checkingFullField ()) alert(`Победила дружба !!!`)
 
     /* Пользоваться методом для размещения символа в клетке так:
         renderSymbolInCell(ZERO, row, col);
      */
+}
+
+function checkingFullField () {
+    for (let i = 0; i < gameField.length; i++) 
+        for (let j = 0; j < gameField.length; j++)
+            if (gameField[i][j] == EMPTY) return false
+    return true
+}
+
+function checkingWinner () {
+    ans = EMPTY
+    for (let i = 0; i < gameField.length; i++) {
+        if (checkingMasIdentity(gameField[i]) != EMPTY) return checkingMasIdentity(gameField[i])
+    }
+
+    for (let i = 0; i < gameField.length; i++) {
+        if (checkingMasIdentity(gameField.map(item => item[i])) != EMPTY) return checkingMasIdentity(gameField.map(item => item[i]))
+    }
+    
+    d1 = []
+    d2 = []
+    for (let i = 0; i < gameField.length; i++) {
+        d1.push(gameField[i][i])
+        d2.push(gameField[i][gameField.length - 1 - i])
+    }
+    if (checkingMasIdentity(d1) != EMPTY) return checkingMasIdentity(d1)
+    if (checkingMasIdentity(d2) != EMPTY) return checkingMasIdentity(d2)
+    return ans
+}
+
+function checkingMasIdentity (mas) {
+    first = mas[0] 
+    return mas.every(element => element == first) ? first : EMPTY
 }
 
 function renderSymbolInCell (symbol, row, col, color = '#333') {
@@ -54,6 +113,7 @@ function addResetListener () {
 }
 
 function resetClickHandler () {
+    startGame()
     console.log('reset!');
 }
 
