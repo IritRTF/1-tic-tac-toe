@@ -1,6 +1,11 @@
 const CROSS = 'X';
 const ZERO = 'O';
 const EMPTY = ' ';
+let pole;
+let size;
+let movesLeft;
+let isGameOver;
+
 
 const container = document.getElementById('fieldWrapper');
 
@@ -8,17 +13,23 @@ startGame();
 addResetListener();
 
 function startGame () {
-    renderGrid(3);
+    size = prompt('Укадиие размер поля')
+    movesLeft = size**2
+    pole = [];
+    isGameOver = false;
+    renderGrid(size);
 }
 
-function renderGrid (dimension) {
+function renderGrid (size) {
     container.innerHTML = '';
 
-    for (let i = 0; i < dimension; i++) {
+    for (let i = 0; i < size; i++) {
         const row = document.createElement('tr');
-        for (let j = 0; j < dimension; j++) {
+        pole.push([]);
+        for (let j = 0; j < size; j++) {
             const cell = document.createElement('td');
             cell.textContent = EMPTY;
+            pole[i][j]=EMPTY;
             cell.addEventListener('click', () => cellClickHandler(i, j));
             row.appendChild(cell);
         }
@@ -28,12 +39,113 @@ function renderGrid (dimension) {
 
 function cellClickHandler (row, col) {
     // Пиши код тут
+    if (isGameOver){
+        return
+    }
+    if (findCell(row, col).textContent === EMPTY){
+        if (movesLeft % 2 == 0){
+            makeMove(CROSS, row, col);
+        }
+        else{
+            makeMove(ZERO, row, col);
+        }
+    }
     console.log(`Clicked on cell: ${row}, ${col}`);
 
 
     /* Пользоваться методом для размещения символа в клетке так:
         renderSymbolInCell(ZERO, row, col);
      */
+}
+
+function makeMove(symbol, row, col){
+    renderSymbolInCell(symbol, row, col)
+    pole[row][col] = symbol;
+    movesLeft--;
+    if (checkWinner(symbol, row, col)){
+        if (symbol === CROSS){
+            alert('Победили крестики!');  
+        }
+        if (symbol === ZERO){
+            alert('Победили нолики!');
+        }
+        isGameOver = true
+    }
+    if (movesLeft === 0 && !isGameOver)
+        alert('Победила дружба!');
+}
+
+
+function checkWinner (symbol, row, col) {
+    let Found_win = true;
+    let winLine;
+    for (let i = 0; i < size; i++) {
+        if (pole[row][i] !== symbol) {
+            Found_win = false;
+            break;
+        }
+        Found_win = true;
+    }
+    winLine = "вертикаль";
+
+    if (!Found_win) {
+        for (let i = 0; i < size; i++) {
+            if (pole[i][col] !== symbol) {
+                Found_win = false;
+                break;
+            }
+            Found_win = true;
+        }
+        winLine = "горизонталь";
+    }
+
+    if (!Found_win) {
+        for (let i = 0; i < size; i++) {
+            if (pole[i][i] !== symbol) {
+                Found_win = false;
+                break;
+            }
+            Found_win = true;
+        }
+        winLine = "диоганаль1";
+    }
+
+    if (!Found_win) {
+        for (let i = 0; i < size; i++) {
+            if (pole[i][size - (1 + i)] !== symbol) {
+                Found_win = false;
+                break;
+            }
+            Found_win = true;
+        }
+        winLine = "диоганаль2";
+    }
+
+    if (Found_win)
+        colorWinningLine(winLine, row, col);
+    return Found_win;
+}
+
+function colorWinningLine(winLine, row, col){
+    for (let i = 0; i < size; i++) {
+        switch (winLine) {
+            case "вертикаль":
+                changeColor(findCell(row, i));
+                break;
+
+            case "горизонталь":
+                changeColor(findCell(i, col));
+                break;
+
+            case "диоганаль1":
+                changeColor(findCell(i, i));
+                break;
+
+            case "диоганаль2":
+                changeColor(findCell(i, size - (i + 1)));
+                break;
+        }
+    }
 }
 
 function renderSymbolInCell (symbol, row, col, color = '#333') {
@@ -55,8 +167,13 @@ function addResetListener () {
 
 function resetClickHandler () {
     console.log('reset!');
+    startGame();
 }
 
+function changeColor(cell){
+    cell.style.backgroundColor = '#b43030';
+    cell.style.color = 'white';
+}
 
 /* Test Function */
 /* Победа первого игрока */
