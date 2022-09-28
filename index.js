@@ -4,29 +4,67 @@ const EMPTY = ' ';
 
 const container = document.getElementById('fieldWrapper');
 
+let isAI;
+let dimension;
+let occupiedCells;
 let gameField;
 let activePlayer;
 let winner;
+let meta;
+
+
+startGame();
+addResetListener();
 
 function generateGrid (dimension) {
-    field = []
+    let field = new Array()
     for (let i = 0; i < dimension; i++) {
         field.push([])
         for (let j = 0; j < dimension; j++) {
-            field[i].push(EMPTY)
+            field[i].push({ value: EMPTY, x: i, y: j})
         }
     }
     return field
 }
 
-startGame();
-addResetListener();
+function func(el) {
+    if (el.value === CROSS) this.cross++ 
+    if (el.value === ZERO) this.zero++
+
+}
+function func2() { 
+    return this.cross + this.zero === dimension 
+}
+
+function generateMeta (dimension, gameField) {
+    let meta = {
+        lines: [],
+        columns: [],
+        diagonals: [],
+    }
+
+    meta.diagonals.push({ cross: 0,  zero: 0, add: func, isFull: func2, elements: []})
+    meta.diagonals.push({ cross: 0,  zero: 0, add: func, isFull: func2, elements: []})
+
+    for (let i = 0; i < dimension; i++) {
+        meta.lines.push({ cross: 0,  zero: 0, add: func, isFull: func2, elements: gameField[i]})
+        meta.columns.push({ cross: 0,  zero: 0, add: func, isFull: func2, elements: gameField.map(item => item[i])})
+
+        meta.diagonals[0].elements.push(gameField[i][i])
+        meta.diagonals[1].elements.push(gameField[i][dimension - 1 - i])
+    }
+    return meta
+}
 
 function startGame () {
-    gameField = generateGrid (3)
+    isAI = confirm('Включить искусственный интеллект?');
+    dimension = prompt('Укажите размер поля:', 3);
+    gameField = generateGrid (dimension);
+    meta = generateMeta(dimension, gameField);
+    occupiedCells = 0;
+    renderGrid(dimension);
     activePlayer = CROSS
     winner = EMPTY
-    renderGrid(3);
 }
 
 function renderGrid (dimension) {
@@ -45,54 +83,108 @@ function renderGrid (dimension) {
 }
 
 function cellClickHandler (row, col) {
+    console.log(`Clicked on cell: ${row}, ${col}`);
     if (winner != EMPTY) return
 
-    if (gameField[row][col] == EMPTY) {
-        renderSymbolInCell(activePlayer, row, col, '#F00');
-        gameField[row][col] = activePlayer
-        activePlayer = activePlayer === CROSS ? ZERO : CROSS
-    }
-    console.log(`Clicked on cell: ${row}, ${col}`);
-    winner = checkingWinner ()
-    if (winner != EMPTY) alert(`Победили ${winner} !!!`)
-    else if (checkingFullField ()) alert(`Победила дружба !!!`)
+    if (gameField[row][col].value == EMPTY) {
+        console.log(gameField[row][col].value == EMPTY);
+        makeMove (gameField[row][col])
+    
 
-    /* Пользоваться методом для размещения символа в клетке так:
-        renderSymbolInCell(ZERO, row, col);
-     */
+    if (winner != EMPTY || occupiedCells === Math.pow(dimension, 2)) return
+
+    if (occupiedCells >= Math.pow(dimension, 2) / 2) expandField()
+
+    if (isAI) makeAIMove()
+    }
 }
 
-function checkingFullField () {
-    for (let i = 0; i < gameField.length; i++) 
-        for (let j = 0; j < gameField.length; j++)
-            if (gameField[i][j] == EMPTY) return false
-    return true
+function makeMove (cell) {
+    renderSymbolInCell(activePlayer, cell.x, cell.y);
+    cell.value = activePlayer
+
+    meta.lines[cell.x].add(cell)
+    meta.columns[cell.y].add(cell)
+    occupiedCells++;
+
+    if (cell.x === cell.y) meta.diagonals[0].add(cell)
+    if (cell.x === gameField.length - 1 - cell.y) meta.diagonals[1].add(cell)
+
+    activePlayer = activePlayer === CROSS ? ZERO : CROSS
+
+    winner = checkingWinner ()
+    if (winner != EMPTY) {
+        for (let i = 0; i < gameField.length; i++) renderSymbolInCell (winner[i].value, winner[i].x, winner[i].y, color = '#F00')
+        setTimeout(() => alert(`Победили ${winner[0].value} !!!`), 3)
+    }
+    else if (occupiedCells === Math.pow(dimension, 2)) setTimeout(() => alert(`Победила дружба !!!`), 3)
+}
+
+function makeAIMove () {
+    for (let i = 0; i < Object.values(meta).length; i++) {
+        for (let j = 0; j < Object.values(meta)[i].length; j++) {
+            if (Object.values(meta)[i][j].zero === gameField.length - 1 && Object.values(meta)[i][j].cross === 0) 
+            {
+                makeMove(Object.values(meta)[i][j].elements.find((el) => el.value === EMPTY));
+                return;
+            }
+        }
+    }
+
+    randomMas = []
+    for (let i = 0; i < Object.values(meta).length; i++) {
+        for (let j = 0; j < Object.values(meta)[i].length; j++) {
+            if (Object.values(meta)[i][j].cross + Object.values(meta)[i][j].zero !== gameField.length) 
+            {
+                randomMas.push(Object.values(meta)[i][j].elements.find((el) => el.value === EMPTY));
+            }
+        }
+    }
+    makeMove(randomMas[randomInteger(0, randomMas.length - 1)])
+
+}
+
+function randomInteger(min, max) {
+    let rand = min + Math.random() * (max + 1 - min);
+    return Math.floor(rand);
 }
 
 function checkingWinner () {
-    ans = EMPTY
-    for (let i = 0; i < gameField.length; i++) {
-        if (checkingMasIdentity(gameField[i]) != EMPTY) return checkingMasIdentity(gameField[i])
+    for (let i = 0; i < Object.values(meta).length; i++) {
+        for (let j = 0; j < Object.values(meta)[i].length; j++) {
+            if (Object.values(meta)[i][j].cross === gameField.length || Object.values(meta)[i][j].zero === gameField.length) 
+                return Object.values(meta)[i][j].elements;
+        }
     }
-
-    for (let i = 0; i < gameField.length; i++) {
-        if (checkingMasIdentity(gameField.map(item => item[i])) != EMPTY) return checkingMasIdentity(gameField.map(item => item[i]))
-    }
-    
-    d1 = []
-    d2 = []
-    for (let i = 0; i < gameField.length; i++) {
-        d1.push(gameField[i][i])
-        d2.push(gameField[i][gameField.length - 1 - i])
-    }
-    if (checkingMasIdentity(d1) != EMPTY) return checkingMasIdentity(d1)
-    if (checkingMasIdentity(d2) != EMPTY) return checkingMasIdentity(d2)
-    return ans
+    return EMPTY
 }
 
-function checkingMasIdentity (mas) {
-    first = mas[0] 
-    return mas.every(element => element == first) ? first : EMPTY
+function expandField () {
+    dimension = +dimension + 2;
+    let gameField2 = generateGrid (dimension);
+    let meta2 = generateMeta(dimension, gameField2)
+
+    for (let i = 0; i < dimension - 2; i++) {
+        for (let j = 0; j < dimension - 2; j++) {
+            gameField2[i + 1][j + 1].value = gameField[i][j].value
+            meta2.lines[i + 1].add(gameField2[i + 1][j + 1])
+            meta2.columns[i + 1].add(gameField2[j + 1][i + 1])
+        }
+        meta2.diagonals[0].add(gameField2[i + 1][i + 1])
+        meta2.diagonals[1].add(gameField2[i + 1][dimension - 2 - i])
+    }
+    console.log(meta)
+    console.log(meta2)
+
+    gameField = gameField2
+    meta = meta2
+    renderGrid(dimension)
+
+    for (let i = 0; i < dimension; i++) {
+        for (let j = 0; j < dimension ; j++) {
+            renderSymbolInCell(gameField[i][j].value, gameField[i][j].x, gameField[i][j].y)
+        }
+    }
 }
 
 function renderSymbolInCell (symbol, row, col, color = '#333') {
