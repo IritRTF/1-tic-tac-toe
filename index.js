@@ -27,15 +27,16 @@ const container = document.getElementById('fieldWrapper');
 let onAI = false;
 let isAdvanceAI = false;
 let isFieldExtensionEnabled = false;
+let stupidGame = false;
+let isGameOver = false;
 
 let allCell = [];
 let field = [];
 
 let winLength = 3;
+let startFieldSize = 3;
 let fieldSize = 3;
 let moveCounter = 0;
-let isGameOver = false;
-
 
 startGame();
 addResetListener();
@@ -55,7 +56,8 @@ function updateListCell (){
 }
 
 function startGame () {
-
+    setFieldSize();
+    setLengthWinLine();
     if (!isFieldExtensionEnabled){
         isFieldExtensionEnabled = confirm("Включить расширение поля?");
     }
@@ -65,25 +67,34 @@ function startGame () {
             onAI = true;
         }
     }
+    restartGame();
+}
+
+function restartGame(){
+    fieldSize = startFieldSize;
     isGameOver = false;
     field = [];
-    fieldSize = getStartFieldSize();
-    //winLength = fieldSize <= 5? 3: 5; // если вдруг не хотим делать серии из 3 на большом поле 
     moveCounter = 0;
     createField(fieldSize);
     renderGrid(fieldSize);
     updateListCell();
 }
 
-function getStartFieldSize () {
-    let result = "";
-    result = prompt("Введите стартовое значение размера поля.", 3);
-    while (isNaN(result)) {
-        result = prompt("Неверный ввод данных. Повторите попытку — введите число.", 3);
+function setLengthWinLine(){
+    if (confirm("поиграть в крестики-нолики для однозубиков?")){
+        stupidGame = true;
+        winLength = fieldSize;
+    }else{
+        winLength = fieldSize <= 5? Math.min(3, fieldSize) : 5;
     }
-    return result;
 }
 
+function setFieldSize () {
+    fieldSize = prompt("Введите стартовое значение размера поля.", 3);
+    while (isNaN(fieldSize)) {
+        fieldSize = prompt("Неверный ввод данных. Повторите попытку — введите число.", 3);
+    }
+}
 
 function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
@@ -154,7 +165,7 @@ function makeMove (point, symbol){
         announceWinner(line, onAI && symbol === ZERO ? "AI": `Player${symbol === CROSS? 1: 2}`);
         return;
     }
-    updateGameStatus();
+    checkFieldForDraw();
 
     if(onAI && symbol == CROSS)
         makeMove(getMoveAI(), GetCurrentSymbolPlayer(moveCounter));
@@ -167,7 +178,7 @@ function announceWinner (lineWinner, nameWinner){
     isGameOver = true;
 }
 
-function updateGameStatus () {
+function checkFieldForDraw () {
     if (fieldSize ** 2 == moveCounter) {
         alert('Победила дружба');
         isGameOver = true;
@@ -175,6 +186,9 @@ function updateGameStatus () {
         extendField();
         rerenderField();
         updateListCell();
+        if (stupidGame){
+            winLength = fieldSize;
+        }
     }
 }
 
@@ -204,11 +218,8 @@ function findWinnerCell (symbol) {
 }
 
 function findWinLineInPosition (x, y, symbol){
-    let neighbourCells = getNeighbourCells(x, y);
-    for (let neighbourCell of neighbourCells) {
-        let direction = new Vector(neighbourCell.x - x, neighbourCell.y - y);
+    for (let direction of DIRECTIONS) {
         let line = createLine(new Vector(x, y), direction, symbol);
-
         if(line.length >= winLength)
             return line; 
     }
@@ -295,7 +306,7 @@ function addResetListener () {
 }
 
 function resetClickHandler () {
-    startGame();
+    restartGame();
     console.log('reset!');
 }
 
