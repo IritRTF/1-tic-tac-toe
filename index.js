@@ -83,9 +83,9 @@ function restartGame(){
 function setLengthWinLine(){
     if (confirm("поиграть в крестики-нолики для однозубиков?")){
         stupidGame = true;
-        winLength = fieldSize;
+        winLength = startFieldSize;
     }else{
-        winLength = fieldSize <= 5? Math.min(3, fieldSize) : 5;
+        winLength = startFieldSize <= 5? Math.min(3, startFieldSize) : 5;
     }
 }
 
