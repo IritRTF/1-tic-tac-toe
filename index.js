@@ -34,8 +34,8 @@ let allCell = [];
 let field = [];
 
 let winLength = 3;
-let startFieldSize = 3;
 let fieldSize = 3;
+let startFieldSize = 3;
 let moveCounter = 0;
 
 startGame();
@@ -90,9 +90,9 @@ function setLengthWinLine(){
 }
 
 function setFieldSize () {
-    fieldSize = prompt("Введите стартовое значение размера поля.", 3);
-    while (isNaN(fieldSize)) {
-        fieldSize = prompt("Неверный ввод данных. Повторите попытку — введите число.", 3);
+    startFieldSize = prompt("Введите стартовое значение размера поля.", 3);
+    while (isNaN(startFieldSize)) {
+        startFieldSize = prompt("Неверный ввод данных. Повторите попытку — введите число.", 3);
     }
 }
 
