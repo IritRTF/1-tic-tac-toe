@@ -57,7 +57,6 @@ function resetClickHandler () {
     console.log('reset!');
 }
 
-
 /* Test Function */
 /* Победа первого игрока */
 function testWin () {
