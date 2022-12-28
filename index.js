@@ -1,7 +1,9 @@
 const CROSS = 'X';
 const ZERO = 'O';
 const EMPTY = ' ';
-
+let field = [[EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY]];
+let currentSymbol = CROSS;
+let haveWinner = false;
 const container = document.getElementById('fieldWrapper');
 
 startGame();
@@ -29,11 +31,73 @@ function renderGrid (dimension) {
 function cellClickHandler (row, col) {
     // Пиши код тут
     console.log(`Clicked on cell: ${row}, ${col}`);
+    if (field[row][col] !== EMPTY || haveWinner)
+        return
+    field[row][col] = currentSymbol;
+    renderSymbolInCell(currentSymbol,row,col)
+    currentSymbol = currentSymbol === CROSS ? ZERO:CROSS;
+    searchWinner()
+    if(!haveWinner && field.flat(Infinity).every(a => a !== EMPTY))
+        announceWinner("Победила дружба");
+}
 
+function searchWinner () {
+    for (let i = 0; i < 3; i++) {
+        if (field[i][0] === field[i][1] && field[i][2] === field[i][1]) {
+            if (field[i][0] === CROSS){
+                changeColorOfCells([[i,0],[i,1],[i,2]],'#FF0000')
+                announceWinner("Крестики победили")
+            }
 
-    /* Пользоваться методом для размещения символа в клетке так:
-        renderSymbolInCell(ZERO, row, col);
-     */
+            else if (field[i][0] === ZERO){
+                changeColorOfCells([[i,0],[i,1],[i,2]],'#FF0000')
+                announceWinner("Нолики победили")
+            }
+        }
+        if (field[0][i] === field[1][i] && field[2][i] === field[1][i]) {
+            if (field[0][i] === CROSS){
+                changeColorOfCells([[0,i],[1,i],[2,i]],'#FF0000')
+                announceWinner("Крестики победили")
+            }
+
+            else if (field[0][i] === ZERO){
+                changeColorOfCells([[0,i],[1,i],[2,i]],'#FF0000')
+                announceWinner("Нолики победили")
+            }
+        }
+    }
+
+    if(field[0][0] === field[1][1] && field[1][1] === field[2][2]){
+        if (field[1][1] === CROSS){
+            changeColorOfCells([[0,0],[1,1],[2,2]],'#FF0000')
+            announceWinner("Крестики победили")
+        }
+        else if (field[1][1] === ZERO){
+            changeColorOfCells([[0,0],[1,1],[2,2]],'#FF0000')
+            announceWinner("Нолики победили")
+        }
+    }
+    if(field[0][2] === field[1][1] && field[1][1] === field[2][0]){
+        if (field[1][1] === CROSS){
+            changeColorOfCells([[2,0],[1,1],[0,2]],'#FF0000')
+            announceWinner("Крестики победили")
+        }
+        else if (field[1][1] === ZERO){
+            changeColorOfCells([[2,0],[1,1],[0,2]],'#FF0000')
+            announceWinner("Нолики победили")
+        }
+    }
+}
+
+function announceWinner(str){
+    haveWinner = true;
+    alert(str)
+}
+
+function changeColorOfCells(arr, colorNew){
+    for (const [row,col] of arr) {
+        renderSymbolInCell(field[row][col],row,col,colorNew)
+    }
 }
 
 function renderSymbolInCell (symbol, row, col, color = '#333') {
@@ -55,6 +119,16 @@ function addResetListener () {
 
 function resetClickHandler () {
     console.log('reset!');
+    field = [[EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY]];
+    currentSymbol = CROSS;
+    field.forEach((a,row) => {
+        a.forEach((b,col) => {
+            renderSymbolInCell(EMPTY,row,col)
+            return b
+        })
+        return a
+    })
+    haveWinner = false;
 }
 
 
