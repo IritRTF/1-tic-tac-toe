@@ -1,7 +1,14 @@
 const CROSS = 'X';
 const ZERO = 'O';
 const EMPTY = ' ';
-
+let field = [[1, 2, 3], [4, 5, 6],[7, 8, 9]];
+let currPlayer = 0;
+// let crossesRow = 0;
+// let crossesCol = 0;
+// let crossesDiag = 0;
+// let zerosRow = 0;
+// let zerosCol = 0;
+// let zerosDiag = 0;
 const container = document.getElementById('fieldWrapper');
 
 startGame();
@@ -28,8 +35,23 @@ function renderGrid (dimension) {
 
 function cellClickHandler (row, col) {
     // Пиши код тут
+    currPlayer++;
+    if (currPlayer % 2 == 1){
+        renderSymbolInCell(CROSS,row,col);
+        field[row, col] = CROSS;
+        // for (let j = 0;j<3;j++){
+        //     for (let i = 0;i<3;i++){
+        //         crossesRow = field[row,i] == CROSS ? crossesRow+1 : crossesRow;
+        //     }
+        //     console.log(crossesRow);
+        //     crossesRow =0;
+        // }
+    }
+    else{
+        renderSymbolInCell(ZERO,row,col);
+        field[row, col] = ZERO;
+    }
     console.log(`Clicked on cell: ${row}, ${col}`);
-
 
     /* Пользоваться методом для размещения символа в клетке так:
         renderSymbolInCell(ZERO, row, col);
@@ -55,6 +77,13 @@ function addResetListener () {
 
 function resetClickHandler () {
     console.log('reset!');
+    for(let i =0;i<3;i++){
+        for(let j =0;j<3;j++) {
+            renderSymbolInCell(EMPTY, i, j);
+        }
+    }
+    field = [[1, 2, 3], [4, 5, 6],[7, 8, 9]];
+    currPlayer = 0;
 }
 
 
