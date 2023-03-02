@@ -14,7 +14,7 @@ addResetListener();
 
 function startGame() {
     dimension = Number(prompt('Введите размер поля:', 3))
-    if (dimension < 1){
+    if (dimension < 1) {
         alert('Введите число > 1')
         startGame()
     }
@@ -70,7 +70,6 @@ function cellClickHandler(row, col) {
 
 function renderSymbolInCell(symbol, row, col, color = '#333') {
     const targetCell = findCell(row, col);
-
     targetCell.textContent = symbol;
     targetCell.style.color = color;
 }
