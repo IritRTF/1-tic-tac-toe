@@ -7,7 +7,7 @@ body {
     margin: 40px auto;
     /*display: inline-block;*/
     width: auto;
-    background-color: lightgoldenrodyellow;
+    background-color: rgb(229, 128, 191);
     padding: 10px;
 }
 
@@ -48,6 +48,6 @@ body {
     padding: 10px;
     background: none;
     font-size: 16px;
-    border: 3px solid orange;
+    border: 3px solid rgb(233, 21, 159);
     border-radius: 5px;
 }
