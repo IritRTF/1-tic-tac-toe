@@ -56,6 +56,7 @@ function cellClickHandler (row, col) {
         count++;
         if (gaming == true  && robo == 1){
             randomizer();
+            sym = ZERO;
         }
     }
     else if (gaming == true && field[row][col] == EMPTY) {
@@ -76,7 +77,6 @@ function randomizer(){
         pStep = true;
         renderSymbolInCell(ZERO, randomRow, randomCol)
         field[randomRow][randomCol] = ZERO;
-        sym = ZERO;
         count++;
     }
     else randomizer();
