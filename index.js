@@ -1,6 +1,10 @@
 const CROSS = 'X';
 const ZERO = 'O';
 const EMPTY = ' ';
+let field;
+let currentMove = 0;
+let gameOver = false;
+let dimension;
 
 const container = document.getElementById('fieldWrapper');
 
@@ -8,7 +12,26 @@ startGame();
 addResetListener();
 
 function startGame () {
-    renderGrid(3);
+    dimension = +(prompt('Введите размер поля:', 3))
+    if (dimension <= 1) {
+        alert('Введите размер больше 1')
+        startGame()
+    }
+    gameOver = false;
+    renderGrid(dimension);
+    field = createField(dimension)
+}
+
+function createField(dimension) {
+    let field = []
+    for (let i = 0; i < dimension; i++) {
+        let row = [];
+        for (let j = 0; j < dimension; j++) {
+            row.push(EMPTY)
+        }
+        field.push(row)
+    }
+    return field;
 }
 
 function renderGrid (dimension) {
@@ -27,13 +50,63 @@ function renderGrid (dimension) {
 }
 
 function cellClickHandler (row, col) {
-    // Пиши код тут
-    console.log(`Clicked on cell: ${row}, ${col}`);
+    if (field[row][col] === EMPTY && !gameOver) {
+        let symbol;
+        if (currentMove % 2 == 0) symbol = CROSS;
+        else symbol = ZERO;
+        renderSymbolInCell(symbol, row, col); 
+        field[row][col] = symbol;
+        currentMove++;
+        checkWinner(symbol);
+    }
+}
+
+function checkWinner(symbol) {
+    if (checkCombinations(symbol)) {
+        gameOver = true;
+        alert(`Победа: ${symbol}`)
+    } else if (currentMove === dimension * dimension) {
+        gameOver = true;
+        alert('Победила дружба');
+    }
+}
 
 
-    /* Пользоваться методом для размещения символа в клетке так:
-        renderSymbolInCell(ZERO, row, col);
-     */
+function checkCombinations(symbol) {
+    let firstDiagonal = [];
+    let secondDiagonal = [];
+    for (let i = 0; i < dimension; i++) {
+        let horizontal = [];
+        let vertical = [];
+        for (let j = 0; j < dimension; j++) {
+            if (field[i][j] === symbol) horizontal.push({row: i, col: j});
+            if (field[j][i] === symbol) vertical.push({row: j, col: i});
+        }
+        if (field[i][i] === symbol) firstDiagonal.push({row: i, col: i});
+        let reversePoint = dimension - 1 - i;
+        if (field[reversePoint][i] === symbol) secondDiagonal.push({row: reversePoint, col: i}); 
+        if (checkCondition(horizontal) | 
+        checkCondition(vertical) | 
+        checkCondition(firstDiagonal) | 
+        checkCondition(secondDiagonal)) return true;
+        }
+        return false;
+    }
+
+function checkCondition(line){
+    if (dimension === line.length) {
+        paintRed(line);
+        return true;
+    }
+    return false;
+}
+
+function paintRed(line){
+    for (let point of line) {
+        let paint = findCell(point.row, point.col);
+        paint.style.background = '#ff2400'
+        paint.style.color = '#fffff'
+    }
 }
 
 function renderSymbolInCell (symbol, row, col, color = '#333') {
@@ -54,6 +127,8 @@ function addResetListener () {
 }
 
 function resetClickHandler () {
+    startGame()
+    currentMove = 0;
     console.log('reset!');
 }
 
