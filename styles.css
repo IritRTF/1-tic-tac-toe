@@ -51,3 +51,21 @@ body {
     border: 3px solid orange;
     border-radius: 5px;
 }
+
+.AIButton {
+    display: block;
+    margin: 20px auto;
+    padding: 10px;
+    background: none;
+    font-size: 16px;
+    border: 3px solid orange;
+    border-radius: 5px;
+}
+
+.calm{
+    background: none;
+}
+
+.active{
+    background: yellowgreen;
+}
