@@ -2,18 +2,28 @@ const CROSS = 'X';
 const ZERO = 'O';
 const EMPTY = ' ';
 
+
+let countOfSteps = 0;
 const container = document.getElementById('fieldWrapper');
+
+let rightSymbol = CROSS;
+let field;
+let dimension;
+let answers;
+let randomRow;
+let randomCol;
 
 startGame();
 addResetListener();
 
 function startGame () {
-    renderGrid(3);
+    dimension = Number(prompt('Введите размер поля n:'));
+    renderGrid(dimension);
 }
 
 function renderGrid (dimension) {
     container.innerHTML = '';
-
+    createField(dimension);
     for (let i = 0; i < dimension; i++) {
         const row = document.createElement('tr');
         for (let j = 0; j < dimension; j++) {
@@ -26,15 +36,138 @@ function renderGrid (dimension) {
     }
 }
 
-function cellClickHandler (row, col) {
-    // Пиши код тут
-    console.log(`Clicked on cell: ${row}, ${col}`);
-
-
-    /* Пользоваться методом для размещения символа в клетке так:
-        renderSymbolInCell(ZERO, row, col);
-     */
+function createField(dimension){
+    field = [];
+    for(let i = 0 ; i < dimension; i++){
+        let row = [];
+        for(let j = 0; j < dimension; j++){
+            row.push(EMPTY);
+        }
+        field.push(row);
+    }
 }
+
+function isWinner(symbol){
+    for(let i = 0; i < dimension; i++){
+        answers = [];
+
+        for(let j = 0; j < dimension; j++){
+            
+            if(field[i][j] !== symbol){
+                break;
+            }
+
+            answers.push([i, j]);
+        }
+
+        if (answers.length === dimension){
+            return "Победил " + symbol;
+        }
+
+        answers = [];
+
+        for(let j = 0; j < dimension; j++){
+
+            if(field[j][i] !== symbol){
+                break;
+            }
+
+            answers.push([j,i]);
+        }
+
+        if (answers.length === dimension){
+            return "Победил " + symbol;
+        }
+    }
+
+    answers = [];
+
+    for(let i = 0; i < dimension; i++){
+        
+        if(field[i][i] !== symbol){
+            break;
+        }
+
+        answers.push([i,i]);
+    }
+
+    if (answers.length === dimension){
+        return "Победил " + symbol;
+    }
+
+    answers = [];
+
+    for(let i = 0; i < dimension; i++){
+        
+        if(field[dimension - 1 - i][i] !== symbol){
+            break;
+        }
+
+        answers.push([dimension - 1 - i, i]);
+    }
+
+    if (answers.length === dimension){
+        return "Победил " + symbol;
+    }
+}
+
+function determineRightSymbol(){
+    rightSymbol = countOfSteps % 2 === 0 ? CROSS : ZERO;
+    countOfSteps++;
+}
+
+function computerMove(){
+    if (isWinner(rightSymbol) !== 'Победил ' + rightSymbol){
+        determineRightSymbol();
+        randomRow = Math.floor(Math.random() * dimension);
+        randomCol = Math.floor(Math.random() * dimension);
+        
+        while(field[randomRow][randomCol] != EMPTY){
+            
+            randomRow = Math.floor(Math.random() * dimension);
+            randomCol = Math.floor(Math.random() * dimension);
+        }
+    
+        field[randomRow][randomCol] = rightSymbol;
+        renderSymbolInCell(rightSymbol, randomRow, randomCol);
+        if (isWinner(rightSymbol) == 'Победил ' + rightSymbol){
+            for(let i = 0; i < dimension; i++){
+                renderSymbolInCell(rightSymbol, answers[i][0], answers[i][1], color = 'red');
+            }
+
+            alert(isWinner(rightSymbol));
+        }
+        else if(countOfSteps == dimension**2){
+            alert('Победила дружба');
+        }
+    }
+}
+
+function cellClickHandler(row, col) {
+    
+    if ((field[row][col] === EMPTY) & (isWinner(rightSymbol) !== 'Победил ' + rightSymbol)){
+
+        determineRightSymbol();
+        renderSymbolInCell(rightSymbol, row, col);
+        field[row][col] = rightSymbol;
+     
+        if (isWinner(rightSymbol) == 'Победил ' + rightSymbol){
+
+            for(let i = 0; i < dimension; i++){
+                renderSymbolInCell(rightSymbol, answers[i][0], answers[i][1], color = 'red');
+            }
+            
+            alert(isWinner(rightSymbol));
+        }
+        else if (countOfSteps == dimension**2){
+            alert('Победила дружба');
+        }
+        else{
+            computerMove();
+        }
+    }
+}
+    
 
 function renderSymbolInCell (symbol, row, col, color = '#333') {
     const targetCell = findCell(row, col);
@@ -48,40 +181,20 @@ function findCell (row, col) {
     return targetRow.querySelectorAll('td')[col];
 }
 
-function addResetListener () {
+function addResetListener() {
     const resetButton = document.getElementById('reset');
     resetButton.addEventListener('click', resetClickHandler);
 }
 
 function resetClickHandler () {
-    console.log('reset!');
-}
-
-
-/* Test Function */
-/* Победа первого игрока */
-function testWin () {
-    clickOnCell(0, 2);
-    clickOnCell(0, 0);
-    clickOnCell(2, 0);
-    clickOnCell(1, 1);
-    clickOnCell(2, 2);
-    clickOnCell(1, 2);
-    clickOnCell(2, 1);
-}
-
-/* Ничья */
-function testDraw () {
-    clickOnCell(2, 0);
-    clickOnCell(1, 0);
-    clickOnCell(1, 1);
-    clickOnCell(0, 0);
-    clickOnCell(1, 2);
-    clickOnCell(1, 2);
-    clickOnCell(0, 2);
-    clickOnCell(0, 1);
-    clickOnCell(2, 1);
-    clickOnCell(2, 2);
+    field = field.map(row => row.map(() => EMPTY));
+    for(let i = 0; i < dimension; i++){
+        for(let j = 0; j < dimension; j++){
+            renderSymbolInCell(EMPTY, i, j);
+        }
+    }
+    rightSymbol = CROSS;
+    countOfSteps = 0;
 }
 
 function clickOnCell (row, col) {
