@@ -1,0 +1,26 @@
+<!-- Добавим input для ввода размера поля -->
+<input type="number" id="gridSizeInput" placeholder="Введите размер поля" />
+<button onclick="startGame()">Начать</button>
+
+<!-- Обновленный HTML -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Крестики-нолики</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <table class="table">
+            <tbody id="fieldWrapper"></tbody>
+        </table>
+    </div>
+    <div>
+        <input type="number" id="gridSizeInput" placeholder="Введите размер поля" />
+        <button onclick="startGame()">Начать</button>
+        <button class="resetButton" id="reset" onclick="resetClickHandler()">Сначала</button>
+    </div>
+    <script src="index.js"></script>
+</body>
+</html>
